@@ -47,7 +47,7 @@ def main() -> None:
 
     print("Ambient (green) counts:", sensor.ambient_light)
     print("RGB counts (R, G, B):", sensor.rgb_color)
-    print("Ambient snapshot:", sensor.ambient_rgb)
+    print("Ambient snapshot:", sensor.ambient_rgb_ir)
     print("IR-only counts:", sensor.ir_light)
     print("Approximate color:", sensor.approximate_color)
 

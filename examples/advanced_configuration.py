@@ -82,7 +82,7 @@ def configure_sensor(i2c: I2C) -> None:
 
     print("Ambient light counts:", sensor.ambient_light)
     print("RGB tuple:", sensor.rgb_color)
-    print("Ambient snapshot:", sensor.ambient_rgb)
+    print("Ambient snapshot:", sensor.ambient_rgb_ir)
     print("IR-only counts:", sensor.ir_light)
     print("Approximate color:", sensor.approximate_color)
 

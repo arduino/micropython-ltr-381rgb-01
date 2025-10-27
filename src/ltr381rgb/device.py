@@ -319,9 +319,14 @@ class LTR381RGB:
             tuple: A 4-tuple containing the latest IR, green, red, and blue 20-bit samples.
         """
 
+        self._wait_for_sample()
+        return self._read_all_channels()
+
+    def _wait_for_sample(self) -> None:
+        """Block until a fresh measurement is ready to read."""
+
         timeout = max(self.measurement_period_ms, self.integration_time_ms) + 10
         self._poll_ready(timeout)
-        return self._read_all_channels()
 
     @property
     def ambient_light(self) -> int:
@@ -331,8 +336,8 @@ class LTR381RGB:
             int: The raw green-channel count.
         """
 
-        _, green, _, _ = self.raw_channels
-        return green
+        self._wait_for_sample()
+        return self._read_channel(REG_CS_DATA_GREEN)
 
     @classmethod
     def _scale_rgb_tuple(cls, red: int, green: int, blue: int) -> tuple:
@@ -366,12 +371,15 @@ class LTR381RGB:
                 highest channel in the current sample is mapped to 255.
         """
 
-        _, green, red, blue = self.raw_channels
+        self._wait_for_sample()
+        red = self._read_channel(REG_CS_DATA_RED)
+        green = self._read_channel(REG_CS_DATA_GREEN)
+        blue = self._read_channel(REG_CS_DATA_BLUE)
         return self._scale_rgb_tuple(red, green, blue)
 
     @property
-    def ambient_rgb(self) -> dict:
-        """Return ambient ALS value alongside the normalized RGB tuple.
+    def ambient_rgb_ir(self) -> dict:
+        """Return ambient ALS value alongside the normalized RGB tuple and IR count.
 
         Returns:
             dict: Keys include ``ambient`` (raw green count), ``rgb`` (per-sample
@@ -394,8 +402,8 @@ class LTR381RGB:
             int: The raw infrared channel count.
         """
 
-        ir, _, _, _ = self.raw_channels
-        return ir
+        self._wait_for_sample()
+        return self._read_channel(REG_CS_DATA_IR)
 
     @property
     def approximate_color(self) -> str:
@@ -504,7 +512,9 @@ class LTR381RGB:
             float: The computed illuminance in lux.
         """
 
-        ir, green, _, _ = self.raw_channels
+        self._wait_for_sample()
+        green = self._read_channel(REG_CS_DATA_GREEN)
+        ir = self._read_channel(REG_CS_DATA_IR)
         return self.lux_from_raw(
             green,
             ir,
@@ -566,7 +576,10 @@ class LTR381RGB:
             float: The correlated color temperature derived from a fresh sample.
         """
 
-        _, green, red, blue = self.raw_channels
+        self._wait_for_sample()
+        red = self._read_channel(REG_CS_DATA_RED)
+        green = self._read_channel(REG_CS_DATA_GREEN)
+        blue = self._read_channel(REG_CS_DATA_BLUE)
         return self.color_temperature_from_raw(red, green, blue)
 
     def set_thresholds(self, low: int, high: int) -> None:

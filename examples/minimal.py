@@ -32,17 +32,21 @@ def main() -> None:
     print("LTR-381RGB detected: part=0x{:02X} revision=0x{:02X}".format(part_id, revision))
 
     while True:
+        start_time = time.ticks_ms()
+
         if not sensor.is_data_ready:
             time.sleep_ms(5)
-        
-        # print("Ambient light:", sensor.ambient_light)
-        # print("RGB value (R, G, B):", sensor.rgb_color)
-        print("RGB value (R, G, B):", sensor.ambient_rgb)
-        # print("IR-only counts:", sensor.ir_light)
-        # print("Approximate color:", sensor.approximate_color)
-        # print("Estimated lux:", sensor.lux)
-        # print("Estimated color temperature (K):", sensor.color_temperature)
 
+        print("Ambient light:", sensor.ambient_light)
+        print("RGB value (R, G, B):", sensor.rgb_color)
+        print("Combined values:", sensor.ambient_rgb_ir)
+        print("Infrared:", sensor.ir_light)
+        print("Approximate color:", sensor.approximate_color)
+        print("Estimated lux:", sensor.lux)
+        print("Estimated color temperature (K):", sensor.color_temperature)
+
+        # Print FPS
+        print("FPS:", 1000 / (time.ticks_ms() - start_time))
 
 if __name__ == "__main__":
     main()
