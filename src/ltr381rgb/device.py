@@ -372,9 +372,7 @@ class LTR381RGB:
         """
 
         self._wait_for_sample()
-        red = self._read_channel(REG_CS_DATA_RED)
-        green = self._read_channel(REG_CS_DATA_GREEN)
-        blue = self._read_channel(REG_CS_DATA_BLUE)
+        red, green, blue = self._read_rgb_channels()
         return self._scale_rgb_tuple(red, green, blue)
 
     @property
@@ -413,7 +411,8 @@ class LTR381RGB:
             str: A hue name selected from ``_COLOR_WHEEL_NAMES``.
         """
 
-        _, green, red, blue = self.raw_channels
+        self._wait_for_sample()
+        red, green, blue = self._read_rgb_channels()
 
         r = float(red)
         g = float(green)
@@ -577,9 +576,7 @@ class LTR381RGB:
         """
 
         self._wait_for_sample()
-        red = self._read_channel(REG_CS_DATA_RED)
-        green = self._read_channel(REG_CS_DATA_GREEN)
-        blue = self._read_channel(REG_CS_DATA_BLUE)
+        red, green, blue = self._read_rgb_channels()
         return self.color_temperature_from_raw(red, green, blue)
 
     def set_thresholds(self, low: int, high: int) -> None:
@@ -736,6 +733,18 @@ class LTR381RGB:
         """
 
         return tuple(self._read_channel(base) for _, base in _CHANNELS)
+
+    def _read_rgb_channels(self) -> tuple:
+        """Read the red, green, and blue color channels in order.
+
+        Returns:
+            tuple: A 3-tuple of 20-bit readings for red, green, and blue channels.
+        """
+
+        red = self._read_channel(REG_CS_DATA_RED)
+        green = self._read_channel(REG_CS_DATA_GREEN)
+        blue = self._read_channel(REG_CS_DATA_BLUE)
+        return red, green, blue
 
     def _read_channel(self, base_register: int) -> int:
         """Read a single 20-bit channel value starting at the given register.
