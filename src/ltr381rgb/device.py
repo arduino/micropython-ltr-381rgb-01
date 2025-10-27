@@ -371,12 +371,11 @@ class LTR381RGB:
 
     @property
     def ambient_rgb(self) -> dict:
-        """Return ambient ALS value and RGB tuple using a single measurement.
+        """Return ambient ALS value alongside the normalized RGB tuple.
 
         Returns:
-            dict: Keys include ``ambient`` (raw green), ``rgb`` (scaled 0–255 tuple
-                normalized per sample), ``raw_rgb`` (raw red/green/blue counts),
-                and ``ir`` (raw IR count).
+            dict: Keys include ``ambient`` (raw green count), ``rgb`` (per-sample
+                normalized 0–255 tuple), and ``ir`` (raw infrared count).
         """
 
         ir, green, red, blue = self.raw_channels
@@ -384,7 +383,6 @@ class LTR381RGB:
         return {
             "ambient": green,
             "rgb": rgb_scaled,
-            "raw_rgb": (red, green, blue),
             "ir": ir,
         }
 

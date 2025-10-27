@@ -48,12 +48,11 @@ ambient = sensor.ambient_light
 # The brightest channel in the current sample is normalized to 255.
 rgb_8bit = sensor.rgb_color
 
-# Or capture both ambient and RGB (plus IR) in one go
+# Or capture ambient and scaled RGB in one go
 reading = sensor.ambient_rgb
 ambient = reading["ambient"]  # raw 20-bit green count
 rgb = reading["rgb"]          # per-sample normalized 0–255 tuple
-red, green, blue = reading["raw_rgb"]
-ir = reading["ir"]
+ir = reading["ir"]            # raw IR count
 
 # Convert the raw counts into lux (optionally pass calibration to `lux_from_raw`)
 lux = sensor.lux
@@ -96,10 +95,10 @@ match your board before running them.
 
 - Channel results are 20-bit little-endian values; the driver masks and packs
   them into Python integers.
-- The ``rgb_color`` property scales raw red/green/blue readings so the
-  brightest channel in the current sample maps to 255, yielding an 8-bit
-  tuple (0–255). ``ambient_rgb['raw_rgb']`` exposes the unscaled counts for
-  calibration workflows.
+- The ``rgb_color`` and ``ambient_rgb['rgb']`` values scale raw red/green/blue
+  readings so the brightest channel in the current sample maps to 255,
+  yielding an 8-bit tuple (0–255). Use ``ambient_light`` or ``raw_channels``
+  when you need the original 20-bit counts.
 - The driver automatically enforces the datasheet requirement that the
   measurement rate be equal to or slower than the configured integration time.
 - Helper properties expose the effective integration and measurement periods in
