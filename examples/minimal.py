@@ -29,24 +29,16 @@ def main() -> None:
     sensor = LTR381RGB(i2c)
 
     part_id, revision = sensor.part_revision
-    print("LTR-381RGB detected: part=0x{:02X} revision=0x{:02X}".format(part_id, revision))
+    print("🔍 LTR-381RGB detected: part=0x{:02X} revision=0x{:02X}".format(part_id, revision))
 
     while True:
-        start_time = time.ticks_ms()
-
         if not sensor.is_data_ready:
             time.sleep_ms(5)
 
-        print("Ambient light:", sensor.ambient_light)
-        print("RGB value (R, G, B):", sensor.rgb_color)
-        print("Combined values:", sensor.ambient_rgb_ir)
-        print("Infrared:", sensor.ir_light)
-        print("Approximate color:", sensor.approximate_color)
-        print("Estimated lux:", sensor.lux)
-        print("Estimated color temperature (K):", sensor.color_temperature)
-
-        # Print FPS
-        print("FPS:", 1000 / (time.ticks_ms() - start_time))
+        data = sensor.ambient_rgb_ir
+        print("🌿 Ambient light:", data["ambient"])
+        print("🎨 RGB value (R, G, B):", data["rgb"])
+        print("🌌 Infrared:", data["ir"])
 
 if __name__ == "__main__":
     main()
