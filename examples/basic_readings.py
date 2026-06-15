@@ -6,8 +6,8 @@ match your board.
 """
 
 from time import sleep_ms, ticks_ms
-from machine import I2C, Pin  # type: ignore
-from ltr381rgb.device import LTR381RGB
+from machine import I2C
+from ltr381rgb import LTR381RGB
 
 
 def main() -> None:
@@ -17,7 +17,7 @@ def main() -> None:
     i2c = I2C(0)
     sensor = LTR381RGB(i2c)
 
-    part_id, revision = sensor.part_revision
+    part_id, revision = sensor.sensor_info
     print("🔍 LTR-381RGB detected: part=0x{:02X} revision=0x{:02X}".format(part_id, revision))
 
     print("⏱️ Integration time bits:", hex(sensor.integration_time))
@@ -26,9 +26,9 @@ def main() -> None:
     print("🕒 Measurement period (ms):", sensor.measurement_period_ms)
     print("🎚️ Gain bits:", hex(sensor.gain))
 
-    if not sensor.is_data_ready:
+    if not sensor.data_ready:
         print("⏳ Waiting for the first measurement...")
-        while not sensor.is_data_ready:
+        while not sensor.data_ready:
             sleep_ms(10)
 
     raw_ir, raw_green, raw_red, raw_blue = sensor.raw_channels
@@ -52,10 +52,10 @@ def main() -> None:
     sensor.disable()
     print("😴 Sensor disabled for power saving. Re-enabling in ALS-only mode...")
     sensor.enable(color_mode=False)
-    print("✅ Data ready after re-enable:", sensor.is_data_ready)
+    print("✅ Data ready after re-enable:", sensor.data_ready)
     start_time = ticks_ms()
 
-    while not sensor.is_data_ready:
+    while not sensor.data_ready:
         sleep_ms(10)
 
     elapsed_time = ticks_ms() - start_time

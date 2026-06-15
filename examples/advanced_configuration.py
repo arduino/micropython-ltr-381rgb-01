@@ -8,16 +8,16 @@ MicroPython board after adjusting the I2C pins to match your wiring.
 from time import sleep_ms, ticks_ms, ticks_diff
 from machine import I2C
 
-from ltr381rgb.device import LTR381RGB
-from ltr381rgb.enums import Gain, IntegrationTime, MeasurementRate
-from ltr381rgb.errors import LTR381RGBError, LTR381RGBTimeout
+from ltr381rgb import LTR381RGB
+from ltr381rgb import Gain, IntegrationTime, MeasurementRate
+from ltr381rgb import LTR381RGBError, LTR381RGBTimeout
 
 
 def wait_for_sample(sensor: LTR381RGB, timeout_ms: int = 1000) -> None:
     """Block until a fresh measurement is available."""
 
     start = ticks_ms()
-    while not sensor.is_data_ready:
+    while not sensor.data_ready:
         if ticks_diff(ticks_ms(), start) >= timeout_ms:
             raise RuntimeError("Timed out waiting for measurement")
         sleep_ms(5)
@@ -71,13 +71,13 @@ def configure_sensor(i2c: I2C) -> None:
 
     low_threshold = 0x0800
     high_threshold = 0x50000
-    sensor.set_thresholds(low_threshold, high_threshold)
-    print("🚦 Thresholds configured:", sensor.get_thresholds())
+    sensor.thresholds = (low_threshold, high_threshold)
+    print("🚦 Thresholds configured:", sensor.thresholds)
 
     sensor.configure_interrupts(enable=True, persist=4, source="green")
     print("🔔 Interrupts enabled on green channel with persist=4")
 
-    part_id, revision = sensor.part_revision
+    part_id, revision = sensor.sensor_info
     print("🆔 Part information:", (part_id, revision))
 
     print("🔄 Rebooting sensor to apply a clean state...")

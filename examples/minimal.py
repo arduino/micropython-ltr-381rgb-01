@@ -7,7 +7,7 @@ match your board.
 
 import time
 from machine import I2C, Pin  # type: ignore
-from ltr381rgb.device import LTR381RGB
+from ltr381rgb import LTR381RGB
 
 
 def main() -> None:
@@ -17,11 +17,11 @@ def main() -> None:
     i2c = I2C(0)
     sensor = LTR381RGB(i2c)
 
-    part_id, revision = sensor.part_revision
+    part_id, revision = sensor.sensor_info
     print("🔍 LTR-381RGB detected: part=0x{:02X} revision=0x{:02X}".format(part_id, revision))
 
     while True:
-        if not sensor.is_data_ready:
+        if not sensor.data_ready:
             time.sleep_ms(5)
 
         data = sensor.ambient_rgb_ir
