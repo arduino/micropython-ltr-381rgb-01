@@ -79,10 +79,10 @@ _MEASUREMENT_OPTIONS = (
 _MEASUREMENT_MS = {bits: ms for bits, ms in _MEASUREMENT_OPTIONS}
 
 _INT_SOURCE_BITS = {
-    "green": const(0x00),
-    "blue": const(0x10),
-    "red": const(0x20),
-    "ir": const(0x30),
+    "ir": const(0x00),
+    "green": const(0x10),
+    "blue": const(0x20),
+    "red": const(0x30),
 }
 
 _CHANNELS = (
