@@ -44,12 +44,16 @@ except ImportError:  # pragma: no cover - used outside MicroPython for linting
 try:
     ticks_ms = time.ticks_ms
     ticks_diff = time.ticks_diff
+    ticks_add = time.ticks_add
 except AttributeError:  # pragma: no cover - CPython fallback for development
     def ticks_ms() -> int:  # type: ignore
         return int(time.time() * 1000)
 
     def ticks_diff(current: int, previous: int) -> int:  # type: ignore
         return current - previous
+
+    def ticks_add(ticks: int, delta: int) -> int:  # type: ignore
+        return ticks + delta
 
 
 _INTEGRATION_MS = {
@@ -325,7 +329,9 @@ class LTR381RGB:
     def _wait_for_sample(self) -> None:
         """Block until a fresh measurement is ready to read."""
 
-        timeout = max(self.measurement_period_ms, self.integration_time_ms) + 10
+        # Add 20% margin + 50ms to account for internal oscillator tolerances
+        base_timeout = max(self.measurement_period_ms, self.integration_time_ms)
+        timeout = int(base_timeout * 1.2) + 50
         self._poll_ready(timeout)
 
     @property
@@ -414,6 +420,9 @@ class LTR381RGB:
         self._wait_for_sample()
         red, green, blue = self._read_rgb_channels()
 
+        # Convert to floats to reuse the hue and saturation logic typically
+        # expressed for normalized RGB values while still operating on raw
+        # counts. Using floats avoids repeated integer conversions later.
         r = float(red)
         g = float(green)
         b = float(blue)
@@ -421,6 +430,8 @@ class LTR381RGB:
         max_val = max(r, g, b)
         min_val = min(r, g, b)
 
+        # All channels zero means complete darkness; fall back to the first
+        # entry in the color wheel to avoid dividing by zero.
         if max_val <= 0.0:
             return _COLOR_WHEEL_NAMES[0]
 
@@ -428,10 +439,14 @@ class LTR381RGB:
         if diff == 0.0:
             return _COLOR_WHEEL_NAMES[0]
 
+        # Very low saturation is effectively grey/white, so classify it as the
+        # neutral "red" bucket as a conservative default.
         saturation = diff / max_val
         if saturation < 0.05:
             return _COLOR_WHEEL_NAMES[0]
 
+        # Compute the hue angle in the standard [0, 360) range using the
+        # dominant channel as the reference sector on the color wheel.
         if max_val == r:
             hue_section = (g - b) / diff % 6.0
         elif max_val == g:
@@ -440,6 +455,8 @@ class LTR381RGB:
             hue_section = ((r - g) / diff) + 4.0
 
         hue_deg = (hue_section * 60.0) % 360.0
+        # Quantize the hue into 12 evenly spaced slices (30° each) to pick a
+        # descriptive color name from the pre-defined wheel.
         index = int((hue_deg + 15.0) // 30.0) % len(_COLOR_WHEEL_NAMES)
         return _COLOR_WHEEL_NAMES[index]
 
@@ -549,21 +566,32 @@ class LTR381RGB:
 
         (m11, m12, m13), (m21, m22, m23), (m31, m32, m33) = matrix
 
+        # Map the sensor's raw RGB counts into the CIE XYZ color space using the
+        # provided 3×3 transformation matrix. Each axis is a weighted sum of the
+        # original channel magnitudes.
         X = (m11 * red) + (m12 * green) + (m13 * blue)
         Y = (m21 * red) + (m22 * green) + (m23 * blue)
         Z = (m31 * red) + (m32 * green) + (m33 * blue)
 
+        # Normalize the XYZ tristimulus values into the chromaticity coordinates
+        # (x, y). If the total energy is zero, the sample cannot be classified.
         denom = X + Y + Z
         if denom <= 0:
             raise LTR381RGBError("Invalid RGB sample for color temperature calculation")
 
         x = X / denom
         y = Y / denom
+
+        # McCamy's approximation operates on the slope between the chromaticity
+        # point and a reference white (x≈0.3320, y≈0.1858). If the denominator is
+        # zero the temperature would be undefined for this sample.
         denom_n = 0.1858 - y
         if denom_n == 0:
             raise LTR381RGBError("Color temperature undefined for y=0.1858")
 
         n = (x - 0.3320) / denom_n
+        # Evaluate McCamy's cubic polynomial to convert the slope into an
+        # estimated correlated color temperature in Kelvin.
         cct = (449.0 * n * n * n) + (3525.0 * n * n) + (6823.3 * n) + 5520.33
         return max(cct, 0.0)
 
@@ -675,7 +703,7 @@ class LTR381RGB:
             LTR381RGBTimeout: If the timeout elapses before data becomes ready.
         """
 
-        deadline = ticks_ms() + timeout_ms
+        deadline = ticks_add(ticks_ms(), timeout_ms)
         while True:
             if self.is_data_ready:
                 return

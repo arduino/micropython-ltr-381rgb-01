@@ -5,7 +5,7 @@ values for every read-only property. Adjust the I2C bus ID and pin numbers to
 match your board.
 """
 
-import time
+from time import sleep_ms, ticks_ms
 
 try:
     from machine import I2C, Pin  # type: ignore
@@ -40,7 +40,7 @@ def main() -> None:
     if not sensor.is_data_ready:
         print("⏳ Waiting for the first measurement...")
         while not sensor.is_data_ready:
-            time.sleep_ms(5)
+            sleep_ms(10)
 
     raw_ir, raw_green, raw_red, raw_blue = sensor.raw_channels
     print("📡 Raw channels (IR, G, R, B):", raw_ir, raw_green, raw_red, raw_blue)
@@ -64,11 +64,13 @@ def main() -> None:
     print("😴 Sensor disabled for power saving. Re-enabling in ALS-only mode...")
     sensor.enable(color_mode=False)
     print("✅ Data ready after re-enable:", sensor.is_data_ready)
+    start_time = ticks_ms()
 
     while not sensor.is_data_ready:
-        time.sleep(15)
+        sleep_ms(10)
 
-    print("✅ Data ready")
+    elapsed_time = ticks_ms() - start_time
+    print(f"✅ Data ready after {elapsed_time} ms.")
 
 if __name__ == "__main__":
     main()
