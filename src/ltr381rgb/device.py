@@ -7,6 +7,7 @@ from .constants import (
     DATA_20BIT_MASK,
     DATA_HIGH_NIBBLE_MASK,
     DEFAULT_I2C_ADDRESS,
+    EXPECTED_PART_ID,
     GAIN_MASK,
     INT_CFG_ENABLE,
     INT_CFG_SOURCE_MASK,
@@ -30,6 +31,7 @@ from .constants import (
     REG_MAIN_CTRL,
     REG_MAIN_STATUS,
     REG_PART_ID,
+    RGB_MAX_VALUE,
 )
 from .enums import Gain, IntegrationTime, MeasurementRate
 from .errors import LTR381RGBError, LTR381RGBTimeout
@@ -156,7 +158,7 @@ class LTR381RGB:
         part = self._read_register(REG_PART_ID)
         self._part_id = part >> 4
         self._revision = part & 0x0F
-        if self._part_id != 0x0C:
+        if self._part_id != EXPECTED_PART_ID:
             raise LTR381RGBError("Unexpected part identifier 0x{:02X}".format(part))
 
     @property
@@ -359,9 +361,9 @@ class LTR381RGB:
             return 0, 0, 0
 
         def _scale(channel: int) -> int:
-            scaled = (channel * 255 + (max_value // 2)) // max_value
-            if scaled > 255:
-                return 255
+            scaled = (channel * RGB_MAX_VALUE + (max_value // 2)) // max_value
+            if scaled > RGB_MAX_VALUE:
+                return RGB_MAX_VALUE
             if scaled < 0:
                 return 0
             return int(scaled)

@@ -55,3 +55,9 @@ INT_PST_PERSIST_MASK = const(0xF0)
 CHANNEL_REGISTER_SIZE = const(3)
 DATA_HIGH_NIBBLE_MASK = const(0x0F)
 DATA_20BIT_MASK = const(0x0FFFFF)
+
+# Expected part number identifier (upper nibble of PART_ID register)
+EXPECTED_PART_ID = const(0x0C)
+
+# Maximum value for an 8-bit color channel
+RGB_MAX_VALUE = const(255)
