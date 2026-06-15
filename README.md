@@ -20,7 +20,7 @@ Any board that can run a modern version of MicroPython and exposes an I2C interf
 The easiest way is to use the [Arduino MicroPython Package Installer](https://github.com/arduino/lab-micropython-package-installer/releases/latest). Otherwise you can use [mpremote and mip](https://docs.micropython.org/en/latest/reference/packages.html#packages): 
 
 ```bash
-mpremote mip install github:arduino/micropython-LTR-381RGB-01
+mpremote mip install github:arduino/micropython-ltr-381rgb-01
 ```
 
 ## 🧑‍💻 Developer Installation
@@ -71,7 +71,7 @@ Refer to the [LTR-381RGB-01 datasheet](https://optoelectronics.liteon.com/upload
 
 ## 🐛 Reporting Issues
 
-If you encounter any issue, please open a bug report [here](https://github.com/arduino/micropython-LTR-381RGB-01/issues).
+If you encounter any issue, please open a bug report [here](https://github.com/arduino/micropython-ltr-381rgb-01/issues).
 
 ## 💪 Contributing
 
