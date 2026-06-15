@@ -143,7 +143,13 @@ class LTR381RGB:
 
     @property
     def integration_time(self) -> int:
-        """Return the raw integration-time bit pattern from the sensor.
+        """
+        Return the raw integration-time bit pattern from the sensor.
+        Integration time means the duration over which the sensor accumulates light for each measurement. 
+        Longer integration times allow more light to be collected, improving sensitivity in low-light conditions, 
+        but they also increase the time between measurements and can lead to saturation in bright environments. 
+        Shorter integration times are better for bright conditions and faster updates but may yield noisier readings in low light. 
+        Adjusting the integration time allows you to optimize the sensor's performance for your specific lighting scenario.
 
         Returns:
             int: The integration time bit-field stored in ``REG_ALS_CS_MEAS_RATE``.
@@ -158,6 +164,12 @@ class LTR381RGB:
 
         Parameters:
             value (int): The integration time bit-field to write.
+                         The value can be one of the following:
+                            - IntegrationTime.MS400: 400 ms integration (20-bit resolution)
+                            - IntegrationTime.MS200: 200 ms integration (19-bit resolution)
+                            - IntegrationTime.MS100: 100 ms integration (18-bit resolution, default)
+                            - IntegrationTime.MS50: 50 ms integration (17-bit resolution)
+                            - IntegrationTime.MS25: 25 ms integration (16-bit resolution)
 
         Raises:
             ValueError: If the bit-field is not supported by the sensor.
@@ -197,10 +209,22 @@ class LTR381RGB:
 
     @measurement_rate.setter
     def measurement_rate(self, value: int) -> None:
-        """Set the measurement cadence, validating against integration timing.
+        """
+        Set the measurement cadence, validating against integration timing.
+        Measurement rate determines how frequently the sensor takes measurements.
+        Faster rates provide more frequent updates but may not allow enough time 
+        for longer integration periods, leading to stale or invalid data.
 
         Parameters:
             value (int): The measurement rate bit-field to write.
+                         The value can be one of the following:
+                            - MeasurementRate.MS25: 25 ms between measurements
+                            - MeasurementRate.MS50: 50 ms between measurements
+                            - MeasurementRate.MS100: 100 ms between measurements (default)
+                            - MeasurementRate.MS200: 200 ms between measurements
+                            - MeasurementRate.MS500: 500 ms between measurements
+                            - MeasurementRate.MS1000: 1 second between measurements
+                            - MeasurementRate.MS2000: 2 seconds between measurements
 
         Raises:
             ValueError: If the supplied rate is unsupported or violates the integration constraint.
@@ -243,10 +267,23 @@ class LTR381RGB:
 
     @gain.setter
     def gain(self, value: int) -> None:
-        """Set the sensor gain using one of the supported bit patterns.
+        """
+        Set the sensor gain using one of the supported bit patterns.
+
+        Gain is the analog amplification factor applied to the raw channel readings before digitization. 
+        Higher gain settings amplify low-light signals, improving sensitivity in dim conditions, 
+        but can lead to saturation in bright environments. Conversely, lower gain settings are better 
+        for bright conditions but may yield noisier readings in low light. 
+        Adjusting the gain allows you to optimize the sensor's performance for your specific lighting scenario.
 
         Parameters:
             value (int): The gain bit-field to write.
+                         The value can be one of the following:
+                            - Gain.X1: 1x amplification (default)
+                            - Gain.X3: 3x amplification
+                            - Gain.X6: 6x amplification
+                            - Gain.X9: 9x amplification
+                            - Gain.X18: 18x amplification
 
         Raises:
             ValueError: If the requested gain is not supported.
@@ -287,7 +324,7 @@ class LTR381RGB:
         self._write_register(REG_MAIN_CTRL, 0x00)
 
     @property
-    def is_data_ready(self) -> bool:
+    def data_ready(self) -> bool:
         """Return ``True`` when a new measurement sample is ready to read.
 
         Returns:
@@ -322,6 +359,7 @@ class LTR381RGB:
 
         Returns:
             int: The raw green-channel count.
+                 The range is 0 to 0xFFFFF (20 bits) depending on the integration time and gain settings.
         """
 
         self._wait_for_sample()
@@ -329,7 +367,7 @@ class LTR381RGB:
 
     @classmethod
     def _scale_rgb_tuple(cls, red: int, green: int, blue: int) -> tuple:
-        """Convert raw RGB readings into a tuple of 0–255 values.
+        """Convert raw RGB readings into a tuple of 0-255 values.
 
         The highest raw channel is scaled to 255 and the others are normalized
         proportionally, preserving relative color balance while providing an
@@ -352,7 +390,7 @@ class LTR381RGB:
 
     @property
     def rgb_color(self) -> tuple:
-        """Return a per-sample normalized (red, green, blue) tuple scaled to 0–255.
+        """Return a per-sample normalized (red, green, blue) tuple scaled to 0-255.
 
         Returns:
             tuple: A 3-tuple of 8-bit red, green, and blue values where the
@@ -369,7 +407,7 @@ class LTR381RGB:
 
         Returns:
             dict: Keys include ``ambient`` (raw green count), ``rgb`` (per-sample
-                normalized 0–255 tuple), and ``ir`` (raw infrared count).
+                normalized 0-255 tuple), and ``ir`` (raw infrared count).
         """
 
         ir, green, red, blue = self.raw_channels
@@ -461,6 +499,8 @@ class LTR381RGB:
             gain_bits (int, optional): The gain bit-field to use; defaults to the current device setting.
             integration_bits (int, optional): The integration-time bit-field; defaults to the current device setting.
             window_factor (float): Optical attenuation factor of any cover window.
+                The range is typically between 0 and 1, where 1 means no attenuation and lower values represent more significant light loss. 
+                Adjust this based on the transmissivity of any enclosure or cover. e.g. a clear glass might have a window factor around 0.9, while a tinted cover could be 0.5 or lower.
             c1 (float): Coefficient used to compensate IR influence on the ALS channel.
             alpha (float): Scaling factor from datasheet equation 15.
 
@@ -589,27 +629,8 @@ class LTR381RGB:
         red, green, blue = self._read_rgb_channels()
         return self.color_temperature_from_raw(red, green, blue)
 
-    def set_thresholds(self, low: int, high: int) -> None:
-        """Configure low and high ALS thresholds for interrupt generation.
-
-        Parameters:
-            low (int): The lower threshold (0–0xFFFFF).
-            high (int): The upper threshold (0–0xFFFFF).
-
-        Raises:
-            ValueError: If the thresholds are out of range or inverted.
-        """
-
-        if not 0 <= low <= DATA_20BIT_MASK:
-            raise ValueError("Low threshold must be between 0 and 0xFFFFF")
-        if not 0 <= high <= DATA_20BIT_MASK:
-            raise ValueError("High threshold must be between 0 and 0xFFFFF")
-        if low > high:
-            raise ValueError("Low threshold must be <= high threshold")
-        self._write_threshold(REG_ALS_THRESH_LOW_L, low)
-        self._write_threshold(REG_ALS_THRESH_UP_L, high)
-
-    def get_thresholds(self) -> tuple:
+    @property
+    def thresholds(self) -> tuple:
         """Return the currently configured (low, high) ALS thresholds.
 
         Returns:
@@ -620,12 +641,33 @@ class LTR381RGB:
         high = self._read_threshold(REG_ALS_THRESH_UP_L)
         return low, high
 
+    @thresholds.setter
+    def thresholds(self, value: tuple) -> None:
+        """Configure low and high ALS thresholds for interrupt generation.
+
+        Parameters:
+            value (tuple): A ``(low, high)`` tuple of 20-bit threshold values (0-0xFFFFF).
+
+        Raises:
+            ValueError: If the thresholds are out of range or inverted.
+        """
+
+        low, high = value
+        if not 0 <= low <= DATA_20BIT_MASK:
+            raise ValueError("Low threshold must be between 0 and 0xFFFFF")
+        if not 0 <= high <= DATA_20BIT_MASK:
+            raise ValueError("High threshold must be between 0 and 0xFFFFF")
+        if low > high:
+            raise ValueError("Low threshold must be <= high threshold")
+        self._write_threshold(REG_ALS_THRESH_LOW_L, low)
+        self._write_threshold(REG_ALS_THRESH_UP_L, high)
+
     def configure_interrupts(self, enable: bool, persist: int = 0, source: str = "green") -> None:
         """Enable or disable threshold interrupts with persistence and channel selection.
 
         Parameters:
             enable (bool): ``True`` to enable the interrupt output, ``False`` to disable it.
-            persist (int): Number of consecutive threshold events required before triggering (0–15).
+            persist (int): Number of consecutive threshold events required before triggering (0-15).
             source (str): Channel to monitor (``"green"``, ``"red"``, ``"blue"``, or ``"ir"``).
 
         Raises:
@@ -652,7 +694,7 @@ class LTR381RGB:
             self._write_register(REG_INT_PST, 0x00)
 
     @property
-    def part_revision(self) -> tuple:
+    def sensor_info(self) -> tuple:
         """Return the (part_id, revision) tuple detected at initialization.
 
         Returns:
@@ -687,7 +729,7 @@ class LTR381RGB:
 
         deadline = ticks_add(ticks_ms(), timeout_ms)
         while True:
-            if self.is_data_ready:
+            if self.data_ready:
                 return
             if ticks_diff(ticks_ms(), deadline) >= 0:
                 raise LTR381RGBTimeout("Sensor data not ready")
