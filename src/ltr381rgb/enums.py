@@ -1,11 +1,6 @@
 """Enumerations describing supported configuration options for the LTR-381RGB-01."""
 
-try:  # pragma: no cover - CPython fallback for linting
-    from micropython import const  # type: ignore
-except ImportError:  # pragma: no cover - used outside MicroPython
-    def const(value):  # type: ignore
-        return value
-
+from micropython import const  # type: ignore
 
 _INT_MS400 = const(0x00)
 _INT_MS200 = const(0x10)

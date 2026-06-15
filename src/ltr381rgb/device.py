@@ -35,28 +35,8 @@ from .constants import (
 )
 from .enums import Gain, IntegrationTime, MeasurementRate
 from .errors import LTR381RGBError, LTR381RGBTimeout
-
-try:  # pragma: no cover - compatibility helper for CPython tooling
-    from micropython import const
-except ImportError:  # pragma: no cover - used outside MicroPython for linting
-    def const(value):  # type: ignore
-        return value
-
-
-try:
-    ticks_ms = time.ticks_ms
-    ticks_diff = time.ticks_diff
-    ticks_add = time.ticks_add
-except AttributeError:  # pragma: no cover - CPython fallback for development
-    def ticks_ms() -> int:  # type: ignore
-        return int(time.time() * 1000)
-
-    def ticks_diff(current: int, previous: int) -> int:  # type: ignore
-        return current - previous
-
-    def ticks_add(ticks: int, delta: int) -> int:  # type: ignore
-        return ticks + delta
-
+from micropython import const
+from time import ticks_ms, ticks_diff, ticks_add
 
 _INTEGRATION_MS = {
     IntegrationTime.MS400: 400,

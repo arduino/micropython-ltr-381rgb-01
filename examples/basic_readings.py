@@ -6,18 +6,7 @@ match your board.
 """
 
 from time import sleep_ms, ticks_ms
-
-try:
-    from machine import I2C, Pin  # type: ignore
-except ImportError:  # pragma: no cover - CPython fallback for linting
-    class I2C:  # type: ignore
-        def __init__(self, *args, **kwargs) -> None:
-            raise RuntimeError("machine.I2C is only available on MicroPython")
-
-    class Pin:  # type: ignore
-        def __init__(self, *args, **kwargs) -> None:
-            raise RuntimeError("machine.Pin is only available on MicroPython")
-
+from machine import I2C, Pin  # type: ignore
 from ltr381rgb.device import LTR381RGB
 
 

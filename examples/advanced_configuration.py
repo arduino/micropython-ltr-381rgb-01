@@ -5,35 +5,8 @@ threshold interrupts, and manual lux/CCT calculations. Run it on a
 MicroPython board after adjusting the I2C pins to match your wiring.
 """
 
-import time
-
-try:
-    from machine import I2C, Pin  # type: ignore
-except ImportError:  # pragma: no cover - CPython fallback for linting
-    class I2C:  # type: ignore
-        def __init__(self, *args, **kwargs) -> None:
-            raise RuntimeError("machine.I2C is only available on MicroPython")
-
-    class Pin:  # type: ignore
-        def __init__(self, *args, **kwargs) -> None:
-            raise RuntimeError("machine.Pin is only available on MicroPython")
-
-try:
-    sleep_ms = time.sleep_ms
-except AttributeError:  # pragma: no cover - CPython fallback for linting
-    def sleep_ms(duration: int) -> None:  # type: ignore
-        time.sleep(duration / 1000.0)
-
-try:
-    ticks_ms = time.ticks_ms
-    ticks_diff = time.ticks_diff
-except AttributeError:  # pragma: no cover - CPython fallback for linting
-    def ticks_ms() -> int:  # type: ignore
-        return int(time.time() * 1000)
-
-    def ticks_diff(current: int, start: int) -> int:  # type: ignore
-        return current - start
-
+from time import sleep_ms, ticks_ms, ticks_diff
+from machine import I2C
 
 from ltr381rgb.device import LTR381RGB
 from ltr381rgb.enums import Gain, IntegrationTime, MeasurementRate
@@ -78,7 +51,7 @@ def configure_sensor(i2c: I2C) -> None:
     wait_for_sample(sensor)
 
     ir, green, red, blue = sensor.raw_channels
-    print("📡 Configured raw channels:", ir, green, red, blue)
+    print("📡 Configured raw channels (ir, green, red, blue):", ir, green, red, blue)
 
     print("🌿 Ambient light counts:", sensor.ambient_light)
     print("🎨 RGB tuple:", sensor.rgb_color)
@@ -119,7 +92,7 @@ def configure_sensor(i2c: I2C) -> None:
 
     # Collect one more sample to confirm the device is operating after reset.
     wait_for_sample(sensor)
-    print("📡 Post-reset raw channels:", sensor.raw_channels)
+    print("📡 Post-reset raw channels (ir, green, red, blue):", sensor.raw_channels)
 
     sensor.disable()
     print("🏁 Sensor disabled at end of script")
