@@ -7,9 +7,8 @@ measurement cadence, and gain settings in a human-friendly way while keeping
 the underlying bit-fields aligned with the datasheet.
 """
 
-from .device import LTR381RGB
-from .enums import Gain, IntegrationTime, MeasurementRate
-from .errors import LTR381RGBError, LTR381RGBTimeout
+from .device import LTR381RGB, LTR381RGBError, LTR381RGBTimeout
+from .constants import Gain, IntegrationTime, MeasurementRate
 
 __all__ = [
     "LTR381RGB",

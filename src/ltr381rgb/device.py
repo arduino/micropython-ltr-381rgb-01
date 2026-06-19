@@ -8,15 +8,18 @@ from .constants import (
     DATA_HIGH_NIBBLE_MASK,
     DEFAULT_I2C_ADDRESS,
     EXPECTED_PART_ID,
+    Gain,
     GAIN_MASK,
     INT_CFG_ENABLE,
     INT_CFG_SOURCE_MASK,
+    IntegrationTime,
     INT_PST_PERSIST_MASK,
     MAIN_CTRL_ALS_ENABLE,
     MAIN_CTRL_CS_MODE,
     MAIN_CTRL_SW_RESET,
     MAIN_STATUS_DATA_NEW,
     MEAS_RATE_MASK,
+    MeasurementRate,
     MEAS_RESOLUTION_MASK,
     REG_ALS_CS_GAIN,
     REG_ALS_CS_MEAS_RATE,
@@ -33,10 +36,17 @@ from .constants import (
     REG_PART_ID,
     RGB_MAX_VALUE,
 )
-from .enums import Gain, IntegrationTime, MeasurementRate
-from .errors import LTR381RGBError, LTR381RGBTimeout
 from micropython import const
 from time import ticks_ms, ticks_diff, ticks_add
+
+
+class LTR381RGBError(Exception):
+    """Base exception for driver level failures."""
+
+
+class LTR381RGBTimeout(LTR381RGBError):
+    """Raised when sensor data fails to become ready within the expected window."""
+
 
 _INTEGRATION_MS = {
     IntegrationTime.MS400: 400,
