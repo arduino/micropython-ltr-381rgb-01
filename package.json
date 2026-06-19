@@ -1,0 +1,9 @@
+{
+  "urls": [
+    ["ltr381rgb/__init__.py", "github:arduino/micropython-ltr-381rgb-01/src/ltr381rgb/__init__.py"],
+    ["ltr381rgb/constants.py", "github:arduino/micropython-ltr-381rgb-01/src/ltr381rgb/constants.py"],
+    ["ltr381rgb/device.py", "github:arduino/micropython-ltr-381rgb-01/src/ltr381rgb/device.py"]
+  ],
+  "deps": [],
+  "version": "1.0.0"
+}
